@@ -1,6 +1,7 @@
 package com.relp.service.auth;
 
 import com.relp.entity.User;
+import com.relp.payload.user.LoginDto;
 import com.relp.payload.user.UserDto;
 import com.relp.repository.user.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -14,10 +15,12 @@ public class AuthService {
 
     private UserRepository userRepository;
     private ModelMapper modelMapper;
+    private JWTService jwtService;
 
-    public AuthService(UserRepository userRepository, ModelMapper modelMapper) {
+    public AuthService(UserRepository userRepository, ModelMapper modelMapper, JWTService jwtService) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
+        this.jwtService = jwtService;
     }
 
     public UserDto findEmail(UserDto userDto) {
@@ -70,5 +73,16 @@ public class AuthService {
         User user = convertDtoToEntity(userDto);
         User save = userRepository.save(user);
         return convertEntityToDto(save);
+    }
+
+    public String verifyUser(LoginDto loginDto) {
+        Optional<User> opEmail = userRepository.findByEmail(loginDto.getEmail());
+        if(opEmail.isPresent()){
+            boolean checkpw = BCrypt.checkpw(loginDto.getPassword(), opEmail.get().getPassword());
+            if(checkpw==true){
+                return jwtService.generateToken(opEmail.get().getEmail());
+            }
+        }
+        return null;
     }
 }

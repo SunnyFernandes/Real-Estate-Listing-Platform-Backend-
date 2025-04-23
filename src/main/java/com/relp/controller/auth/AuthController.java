@@ -1,5 +1,7 @@
 package com.relp.controller.auth;
 
+import com.relp.payload.user.JWTTokenDto;
+import com.relp.payload.user.LoginDto;
 import com.relp.payload.user.UserDto;
 import com.relp.service.auth.AuthService;
 import org.springframework.http.HttpStatus;
@@ -62,5 +64,19 @@ public class AuthController {
             }
         }
         return new ResponseEntity<>(HttpStatus.CONFLICT);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(
+            @RequestBody LoginDto loginDto
+    ) {
+        String token = authService.verifyUser(loginDto);
+        if(token != null){
+            JWTTokenDto tokenDto = new JWTTokenDto();
+            tokenDto.setToken(token);
+            tokenDto.setType("JWT");
+            return new ResponseEntity<>(tokenDto,HttpStatus.ACCEPTED);
+        }
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 }
